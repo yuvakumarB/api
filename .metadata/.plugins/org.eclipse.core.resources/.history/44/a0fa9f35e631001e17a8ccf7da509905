@@ -1,0 +1,98 @@
+package org.jsp.api.service;
+
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+
+import org.jsp.api.dao.UserDao;
+import org.jsp.api.dto.EmailConfiguration;
+import org.jsp.api.dto.Merchant;
+import org.jsp.api.dto.ResponseStructure;
+import org.jsp.api.dto.User;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+@Service
+public class UserService {
+	@Autowired
+	private UserDao dao;
+	@Autowired
+	private EmailConfiguration configuration;
+	@Autowired
+	private ShoppingCartMailService mailService;
+	@Autowired
+	private GenerateLinkService service;
+
+	public ResponseEntity<ResponseStructure<User>> saveUser(User user, HttpServletRequest request) {
+		ResponseStructure<User> structure = new ResponseStructure<>();
+		structure.setData(dao.saveUser(user));
+		structure.setStatuscode(HttpStatus.CREATED.value());
+		structure.setMessage("User Register successfull");
+
+		configuration.setSubject("Registration Succesful");
+		userdao.saveUser(user);
+		HashMap<String, String> map = new LinkedHashMap<>();
+		map.put("email", user.getEmail());
+		map.put("name", user.getName());
+		configuration.setText("Hello Mr." + user.getName()
+				+ "You have Succesfully initiated the registration for our Email comerce application"
+				+ "plese click on link " + service.getVerificationLink(request, user));
+		configuration.setUser(map);
+		mailService.sendMail(configuration);
+		return new ResponseEntity<ResponseStructure<User>>(structure, HttpStatus.CREATED);
+	}
+
+	public ResponseEntity<ResponseStructure<String>> verifyUser(String token) {
+		ResponseStructure<String> structure = new ResponseStructure<>();
+		User user = userdao.verifyUser(token);
+		if (user != null) {
+			user.setToken(null);
+			userdao.updateUser(user);
+			user.setStatus("Active");
+			structure.setData("Your Account is Activated");
+			structure.setStatuscode(HttpStatus.OK.value());
+			structure.setMessage("User is verified");
+			return new ResponseEntity<>(structure, HttpStatus.OK);
+		}
+		structure.setData("Account is not activated");
+		structure.setStatuscode(HttpStatus.NOT_FOUND.value());
+		structure.setMessage("Invalid Token");
+		return new ResponseEntity<ResponseStructure<String>>(structure, HttpStatus.NOT_FOUND);
+	}
+
+	public ResponseEntity<ResponseStructure<String>> sendResetPasswordLink(String email,
+			HttpServletRequest request) {
+		ResponseStructure<String> structure = new ResponseStructure<>();
+		User user=dao
+		if (user != null) {
+			structure.setData("Reset Password Link sending mail");
+			structure.setStatuscode(HttpStatus.ACCEPTED.value());
+			HashMap<String, String> map = new LinkedHashMap<>();
+			map.put("email", user.getEmail());
+			map.put("name", user.getName());
+			configuration.setSubject("Registration Succesful");
+			configuration.setUser(map);
+			configuration.setText("Hello Mr." + user.getName()
+					+ "You have requested for Password change pleseclick on the following Link" + "plese click on link "
+					+ service.getResetPasswordLink(request, user));
+			configuration.setUser(map);
+			mailService.sendMail(configuration);
+			return new ResponseEntity<ResponseStructure<String>>(structure, HttpStatus.ACCEPTED);
+		}
+		return null;
+	}
+
+	public ResponseEntity<ResponseStructure<User>> updateUser(User user) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public ResponseEntity<ResponseStructure<User>> verifyUser(String email, String password) {
+		// TODO Auto-generated method stub
+		return null;
+	}	
+
+}

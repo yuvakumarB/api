@@ -1,0 +1,84 @@
+package org.jsp.api.service;
+
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+
+import org.hibernate.cache.spi.entry.StructuredCacheEntry;
+import org.jsp.api.dao.MerchantDao;
+import org.jsp.api.dto.EmailConfiguration;
+import org.jsp.api.dto.Merchant;
+import org.jsp.api.dto.ResponseStructure;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+@Service
+public class MerchantService {
+	@Autowired
+	private MerchantDao dao;
+	@Autowired
+	private EmailConfiguration configuration;
+	@Autowired
+	private ShoppingCartMailService mailService;
+	@Autowired
+	private GenerateLinkService service;
+
+	public ResponseEntity<ResponseStructure<Merchant>> saveMerchant(Merchant merchant, HttpServletRequest request) {
+		ResponseStructure<Merchant> structure = new ResponseStructure<>();
+		structure.setData(dao.saveMerchant(merchant));
+		structure.setStatuscode(HttpStatus.CREATED.value());
+		structure.setMessage("Merchant Register successfull");
+		configuration.setSubject("Registration Succesful");
+		HashMap<String, String> map = new LinkedHashMap<>();
+		map.put("email", merchant.getEmail());
+		map.put("name", merchant.getName());
+		configuration.setText("Hello Mr." + merchant.getName()
+				+ "You have Succesfully initiated the registration for our Email commerce application"
+				+ "plese click on link " + service.getVerificationLink(request, merchant));
+		configuration.setUser(map);
+		mailService.sendWelcomeMail(configuration);
+		return new ResponseEntity<ResponseStructure<Merchant>>(structure, HttpStatus.CREATED);
+	}
+
+	public ResponseEntity<ResponseStructure<String>> verifyMerchant(String token) {
+		ResponseStructure<String> structure=new ResponseStructure<>();
+		Merchant merchant=dao.verifyMerchant(token);
+		if(merchant !=null) {
+			merchant.setToken(null);
+			merchant.setStatus("Active");
+			dao.updateMerchant(merchant);
+			structure.setData("Your Account Is Activated");
+			structure.setStatuscode(HttpStatus.OK.value());
+			structure.setMessage("Merchant is verified");
+			return new ResponseEntity<>(structure,HttpStatus.OK);			
+		}
+		structure.setData("Account is not Activated");
+		structure.setStatuscode(HttpStatus.NOT_FOUND.value());
+		structure.setMessage("Invalid Token");
+		return new ResponseEntity<ResponseStructure<String>>(structure, HttpStatus.NOT_FOUND);
+	}
+
+	public ResponseEntity<ResponseStructure<String>> sendResetPasswordLink(String email, HttpServletRequest request) {
+		ResponseStructure<String> structure = new ResponseStructure<>();
+		Merchant merchant = dao.findMerchantByEmail(email);
+		if (merchant != null) {
+			HashMap<String, String> map = new LinkedHashMap<>();
+			map.put("email", merchant.getEmail());
+			map.put("name", merchant.getName());
+			configuration.setSubject("Registration Password");
+			configuration.setUser(map);
+			configuration.setText("Hello Mr." + merchant.getName()
+					+ "You have requested for Password change pleseclick on the following Link" + "plese click on link "
+					+ service.getResetPasswordLink(request, merchant));
+			mailService.sendWelcomeMail(configuration);
+			structure.setData("Reset Password Link sending mail");
+			structure.setStatuscode(HttpStatus.ACCEPTED.value());
+			return new ResponseEntity<ResponseStructure<String>>(structure, HttpStatus.ACCEPTED);
+		}
+		return null;
+	}
+}

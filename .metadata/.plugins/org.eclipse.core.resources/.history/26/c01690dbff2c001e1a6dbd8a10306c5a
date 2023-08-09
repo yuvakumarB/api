@@ -1,0 +1,5 @@
+package org.jsp.api.dto;
+
+public class Merchant {
+
+}

@@ -1,0 +1,10 @@
+package org.jsp.api.exception;
+
+import org.jsp.api.dto.ResponseStructure;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+
+public class ShoppingCartApiExceptionHandler {
+	@ExceptionHandler(IdNotFoundException.class)
+	public ResponseEntity<ResponseStructure<String>>
+}

@@ -1,0 +1,6 @@
+package org.jsp.api.dao;
+
+
+public class MerchantDao {
+ 
+}

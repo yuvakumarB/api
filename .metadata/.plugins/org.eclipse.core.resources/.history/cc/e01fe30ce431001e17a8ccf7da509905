@@ -1,0 +1,16 @@
+package org.jsp.api.service;
+
+import org.jsp.api.dto.EmailConfiguration;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Service;
+
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
+@Service
+public class ShoppingCartMailService {
+	@Autowired
+	private JavaMailSender MailSender;
+
+	}
